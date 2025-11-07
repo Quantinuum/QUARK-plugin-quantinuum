@@ -14,6 +14,9 @@
 from quark.plugin_manager import factory
 
 from quark_plugin_quantinuum.backends.aer_simulator import AerSimulator
+from quark_plugin_quantinuum.backends.quantinuuum_nexus import QuantinuumNexus
+from quark_plugin_quantinuum.compilation.quantinuum_nexus import NexusCompilation
+from quark_plugin_quantinuum.converters.pytket_to_qiskit_circuits import PytketToQiskit
 from quark_plugin_quantinuum.free_fermion.free_fermion import FreeFermion
 
 
@@ -27,3 +30,6 @@ def register() -> None:
     """
     factory.register("free_fermion", FreeFermion)
     factory.register("aer_simulator", AerSimulator)
+    factory.register("pytket_to_qiskit_circuits", PytketToQiskit)
+    factory.register("nexus_compile", NexusCompilation)
+    factory.register("nexus_run", QuantinuumNexus)

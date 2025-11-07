@@ -7,6 +7,7 @@ pipeline:
     "free_fermion" : {lx: 2, ly: 4, trotter_dt: 0.3, trotter_n_step: 8},
     "free_fermion" : {lx: 4, ly: 2, trotter_dt: 0.5, trotter_n_step: 8},
   ]
+  - "pytket_to_qiskit_circuits"
   - [
       "aer_simulator",
       "aer_simulator": {n_shots: 1000},

@@ -16,9 +16,11 @@ from qiskit import QuantumCircuit
 
 
 @dataclass
-class BackendInput:
+class BenchmarkCircuitsQiskit:
     """
-    Input required for a quantum backend.
+    Input required for simulation benchmarks
+    submitted to a quantinuum nexus backend.
     """
 
     circuits: list[QuantumCircuit]
+    benchmark_name: str

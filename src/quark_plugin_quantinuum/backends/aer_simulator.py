@@ -20,8 +20,8 @@ from qiskit import QuantumCircuit
 from quark.core import Core, Data, Result
 from quark.interface_types import Other
 
-from .backend_input import BackendInput
-from .backend_result import BackendResult
+from ..interfaces.backend_result import BackendResult
+from ..interfaces.benchmark_circuits_qiskit import BenchmarkCircuitsQiskit
 
 logger = logging.getLogger()
 
@@ -32,19 +32,22 @@ class AerSimulator(Core):
     _results: BackendResult | None = field(init=False, default=None)
 
     @override
-    def preprocess(self, input_data: Other[BackendInput]) -> Result:
+    def preprocess(self, input_data: Other[BenchmarkCircuitsQiskit]) -> Result:
         backend = QiskitAS()
         backend_input = input_data.data
         circuits = backend_input.circuits
         self.warn_on_large_circuits(circuits)
 
         counts_per_circuit = []
-        logger.info("Running circuits on AerSimulator")
+        logger.info(
+            f"Running circuits for benchmark {backend_input.benchmark_name} on AerSimulator"
+        )
         for n, circuit in enumerate(circuits):
             logger.info(f"Running circuit for {n} Trotter steps")
-            counts_per_circuit.append(
+            counts = (
                 backend.run(circuit, shots=self.n_shots).result().get_counts(circuit)
             )
+            counts_per_circuit.append(counts)
 
         self._results = BackendResult(counts=counts_per_circuit, n_shots=self.n_shots)
         return Data(None)

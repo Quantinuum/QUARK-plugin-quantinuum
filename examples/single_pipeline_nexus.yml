@@ -2,4 +2,5 @@ plugins: ["quark_plugin_quantinuum"]
 
 pipeline:
   - "free_fermion" : {create_plot: true}
-  - "aer_simulator"
+  - "nexus_compile": {device: "H2-1LE"}
+  - "nexus_run"
