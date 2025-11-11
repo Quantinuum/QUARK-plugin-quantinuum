@@ -29,16 +29,19 @@ logger = logging.getLogger()
 
 @dataclass
 class NexusUpload(Core):
-    project: str = "quark_benchmarking"
+    project_name: str = "Quark Benchmarking"
 
     @override
     def preprocess(self, input_data: Other[BenchmarkCircuitsPytket]) -> Result:
-        project = qnx.projects.get_or_create(name=self.project)
+        project = qnx.projects.get_or_create(name=self.project_name)
         qnx.context.set_active_project(project)
         jobname_suffix = datetime.datetime.now().strftime("%Y_%m_%d-%H-%M-%S")
         backend_input = input_data.data
         benchmark_name = backend_input.benchmark_name
         circuits = backend_input.circuits
+        logger.info(
+            f"Uploading circuits to Nexus for benchmark {benchmark_name} to project {self.project_name}"
+        )
         circuit_refs = [
             qnx.circuits.upload(
                 circuit=circuit, name=f"{benchmark_name}-{jobname_suffix}-{i}"
@@ -52,7 +55,7 @@ class NexusUpload(Core):
                     circuit_refs,
                     circuits,
                     benchmark_name,
-                    self.project,
+                    self.project_name,
                 )
             )
         )
