@@ -11,14 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from dataclasses import dataclass
-from qiskit import QuantumCircuit
 
 
-@dataclass
-class BackendInput:
-    """
-    Input required for a quantum backend.
-    """
-
-    circuits: list[QuantumCircuit]
+def counter_key_to_string_key(counter_key: tuple[int, ...]) -> str:
+    return "".join([f"{i}" for i in counter_key])

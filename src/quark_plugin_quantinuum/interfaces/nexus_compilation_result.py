@@ -11,3 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from dataclasses import dataclass
+from qnexus.models.references import CircuitRef, HUGRRef, QIRRef
+
+
+@dataclass
+class NexusCompilationResult:
+    """
+    Input required for simulation benchmarks
+    submitted to a quantinuum nexus backend.
+    """
+
+    compiled_circuits: list[CircuitRef | HUGRRef | QIRRef]
+    benchmark_name: str
+    device_name: str
+    project_name: str

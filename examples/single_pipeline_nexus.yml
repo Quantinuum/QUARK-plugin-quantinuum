@@ -1,0 +1,6 @@
+plugins: ["quark_plugin_quantinuum"]
+
+pipeline:
+  - "free_fermion" : {create_plot: true}
+  - "nexus_upload"
+  - "nexus_run": {device: "H2-1LE"}

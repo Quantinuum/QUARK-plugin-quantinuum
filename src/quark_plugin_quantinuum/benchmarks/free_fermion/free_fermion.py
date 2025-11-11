@@ -19,14 +19,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 from quark.core import Core, Data, Result
 from quark.interface_types import Other
+from pytket.extensions.qiskit import qiskit_to_tk
 
-from quark_plugin_quantinuum.backends.backend_input import BackendInput
-from quark_plugin_quantinuum.backends.backend_result import BackendResult
+from quark_plugin_quantinuum.interfaces.backend_result import BackendResult
 from .free_fermion_helpers import (
     create_circuit,
     exact_values_and_variance,
     computes_score_values,
     extract_simulation_results,
+)
+from quark_plugin_quantinuum.interfaces.benchmark_circuits_pytket import (
+    BenchmarkCircuitsPytket,
 )
 
 logger = logging.getLogger()
@@ -90,10 +93,10 @@ class FreeFermion(Core):
             f"Using a trotter step size of {self.trotter_dt} and up to {self.internal_trotter_n_step} trotter steps"
         )
         circuits = [
-            create_circuit(self.lx, self.ly, self.trotter_dt, n)
+            qiskit_to_tk(create_circuit(self.lx, self.ly, self.trotter_dt, n))
             for n in range(self.internal_trotter_n_step)
         ]
-        return Data(Other(BackendInput(circuits)))
+        return Data(Other(BenchmarkCircuitsPytket(circuits, self.benchmark_tag())))
 
     @override
     def postprocess(self, input_data: Other[BackendResult]) -> Result:
@@ -171,3 +174,6 @@ class FreeFermion(Core):
         plt.legend()
         plt.show()
         plt.close()
+
+    def benchmark_tag(self) -> str:
+        return f"free_fermion_{self.lx}_{self.ly}_{self.internal_trotter_n_step}_{self.trotter_dt}"
