@@ -11,7 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from dataclasses import dataclass
+from pytket.circuit import Circuit
+from qnexus.models.references import CircuitRef
 
 
-def counter_key_to_string_key(counter_key: tuple[int, ...]) -> str:
-    return "".join([f"{i}" for i in counter_key])
+@dataclass
+class NexusUploadResult:
+    """
+    Input required for simulation benchmarks
+    submitted to a quantinuum nexus backend.
+    """
+
+    circuit_refs: list[CircuitRef]
+    circuits: list[Circuit]
+    benchmark_name: str
+    nexus_project: str

@@ -11,16 +11,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from dataclasses import dataclass
-from qiskit import QuantumCircuit
-
-
-@dataclass
-class BenchmarkCircuitsQiskit:
-    """
-    Input required for simulation benchmarks
-    submitted to a quantinuum nexus backend.
-    """
-
-    circuits: list[QuantumCircuit]
-    benchmark_name: str

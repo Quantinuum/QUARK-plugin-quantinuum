@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
-from qnexus.models.references import CircuitRef
+from qnexus.models.references import CircuitRef, HUGRRef, QIRRef
 
 
 @dataclass
@@ -22,7 +22,7 @@ class NexusCompilationResult:
     submitted to a quantinuum nexus backend.
     """
 
-    compiled_circuits: list[CircuitRef]
+    compiled_circuits: list[CircuitRef | HUGRRef | QIRRef]
     benchmark_name: str
     device_name: str
     project_name: str

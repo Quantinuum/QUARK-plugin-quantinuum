@@ -19,7 +19,6 @@ from pytket.circuit import Circuit
 class BenchmarkCircuitsPytket:
     """
     Input required for simulation benchmarks
-    submitted to a quantinuum nexus backend.
     """
 
     circuits: list[Circuit]

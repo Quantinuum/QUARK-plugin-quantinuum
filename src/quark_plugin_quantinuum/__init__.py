@@ -15,9 +15,15 @@ from quark.plugin_manager import factory
 
 from quark_plugin_quantinuum.backends.aer_simulator import AerSimulator
 from quark_plugin_quantinuum.backends.quantinuuum_nexus import QuantinuumNexus
-from quark_plugin_quantinuum.compilation.quantinuum_nexus import NexusCompilation
-from quark_plugin_quantinuum.converters.pytket_to_qiskit_circuits import PytketToQiskit
-from quark_plugin_quantinuum.free_fermion.free_fermion import FreeFermion
+from quark_plugin_quantinuum.benchmarks.free_fermion.free_fermion import FreeFermion
+from quark_plugin_quantinuum.miscellaneous.nexus_upload import NexusUpload
+
+quark_modules = [
+    ("free_fermion", FreeFermion),
+    ("aer_simulator", AerSimulator),
+    ("nexus_upload", NexusUpload),
+    ("nexus_run", QuantinuumNexus),
+]
 
 
 def register() -> None:
@@ -28,8 +34,25 @@ def register() -> None:
 
     The "module_name" will later be used to refer to the module in the configuration file.
     """
-    factory.register("free_fermion", FreeFermion)
-    factory.register("aer_simulator", AerSimulator)
-    factory.register("pytket_to_qiskit_circuits", PytketToQiskit)
-    factory.register("nexus_compile", NexusCompilation)
-    factory.register("nexus_run", QuantinuumNexus)
+    for name, module in quark_modules:
+        factory.register(name, module)
+
+
+def print_available_quark_modules() -> None:
+    print_data = [
+        (name, f"{module.__module__}.{module.__qualname__}")
+        for name, module in quark_modules
+    ]
+    # Determine column widths
+    col1_width = max(len(row[0]) for row in print_data)
+    col2_width = max(len(row[1]) for row in print_data)
+
+    # Print header
+    print(
+        f"{'Module Name'.ljust(col1_width)} | {'Implementing Class'.ljust(col2_width)}"
+    )
+    print("-" * (col1_width + col2_width + 3))
+
+    # Print rows
+    for name, module in print_data:
+        print(f"{name.ljust(col1_width)} | {module.ljust(col2_width)}")
