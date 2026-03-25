@@ -34,29 +34,39 @@ class AerSimulator(Core):
     def preprocess(self, input_data: Other[BackendInputQiskit]) -> Result:
         backend_input = input_data.data
         if not isinstance(backend_input, BackendInputQiskit):
-            raise ValueError(f"AerSimulator input error: {BackendInputQiskit.__name__} expected but got {backend_input.__class__.__name__}")
+            raise ValueError(
+                f"AerSimulator input error: {BackendInputQiskit.__name__} expected but got {backend_input.__class__.__name__}"
+            )
         circuits = backend_input.circuits
         shots_per_circuit = backend_input.shots_per_circuit
         self.warn_on_large_circuits(circuits)
 
         counts_per_circuit = []
         backend = QiskitAS()
-        logger.info(f"Running circuits on AerSimulator")
+        logger.info("Running circuits on AerSimulator")
         for n, circuit in enumerate(circuits):
             logger.info(f"Running circuit for {n} Trotter steps")
-            from qiskit_aer.noise import (NoiseModel, depolarizing_error)
+            from qiskit_aer.noise import NoiseModel, depolarizing_error
+
             noise_model = NoiseModel()
             error = depolarizing_error(0.001, 2)
-            noise_model.add_all_qubit_quantum_error(error, ['cx','cy','cz','rzz','rxx','ryy'])
-            counts=backend.run(circuit,noise_model=noise_model, shots=shots_per_circuit[n]).result().get_counts(circuit)
-            
+            noise_model.add_all_qubit_quantum_error(
+                error, ["cx", "cy", "cz", "rzz", "rxx", "ryy"]
+            )
+            counts = (
+                backend.run(
+                    circuit, noise_model=noise_model, shots=shots_per_circuit[n]
+                )
+                .result()
+                .get_counts(circuit)
+            )
+
             counts_per_circuit.append(counts)
 
         self._results = BackendResult(
             counts=counts_per_circuit,
         )
         return Data(None)
-
 
     @override
     def postprocess(self, input_data: Data) -> Result:
@@ -67,5 +77,7 @@ class AerSimulator(Core):
         warning_n_qubits = 30
         max_n_qubit = max([circuit.num_qubits for circuit in circuits])
         if max_n_qubit > warning_n_qubits:
-            logger.warning(f"Simulating circuits with over {warning_n_qubits} qubits. The high memory"
-                           f" requirements can lead to memory errors on some systems.")
+            logger.warning(
+                f"Simulating circuits with over {warning_n_qubits} qubits. The high memory"
+                f" requirements can lead to memory errors on some systems."
+            )

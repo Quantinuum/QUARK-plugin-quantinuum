@@ -62,7 +62,10 @@ class QuantinuumNexus(Core):
         jobname_suffix = datetime.datetime.now().strftime("%Y_%m_%d-%H-%M-%S")
         compilation_result = self.compile(nexus_upload_result, project, jobname_suffix)
         counts_per_circuit = self.run_compiled_circuits(
-            compilation_result, nexus_upload_result.shots_per_circuit, project, jobname_suffix
+            compilation_result,
+            nexus_upload_result.shots_per_circuit,
+            project,
+            jobname_suffix,
         )
         self._results = BackendResult(counts=counts_per_circuit)
         return Data(None)

@@ -20,6 +20,7 @@ class BackendInputQiskit:
     """
     Input required for a quantum backend.
     """
+
     circuits: list[QuantumCircuit]
     shots_per_circuit: list[int]
     benchmark_name: str

@@ -98,18 +98,33 @@ class FreeFermion(Core):
         logger.info(
             f"Using a trotter step size of {self.trotter_dt} and up to {self.internal_trotter_n_step} trotter steps"
         )
-        circuits = [create_circuit(self.lx, self.ly, self.trotter_dt, n)
-                for n in range(self.internal_trotter_n_step)]
-        shots_per_circuit = [self.n_shots]* len(circuits)
+        circuits = [
+            create_circuit(self.lx, self.ly, self.trotter_dt, n)
+            for n in range(self.internal_trotter_n_step)
+        ]
+        shots_per_circuit = [self.n_shots] * len(circuits)
         match self.output_circuit_type:
             case "pytket":
                 circuits_pytket = [qiskit_to_tk(circ) for circ in circuits]
-                return Data(Other(BackendInputPytket(circuits_pytket, shots_per_circuit, self.benchmark_tag())))
+                return Data(
+                    Other(
+                        BackendInputPytket(
+                            circuits_pytket, shots_per_circuit, self.benchmark_tag()
+                        )
+                    )
+                )
             case "qiskit":
-                return Data(Other(BackendInputQiskit(circuits, shots_per_circuit, self.benchmark_tag())))
+                return Data(
+                    Other(
+                        BackendInputQiskit(
+                            circuits, shots_per_circuit, self.benchmark_tag()
+                        )
+                    )
+                )
             case _:
-                raise ValueError(f"Invalid output circuit type: {self.output_circuit_type} only qiskit and pytket are supported")
-
+                raise ValueError(
+                    f"Invalid output circuit type: {self.output_circuit_type} only qiskit and pytket are supported"
+                )
 
     @override
     def postprocess(self, input_data: Other[BackendResult]) -> Result:
