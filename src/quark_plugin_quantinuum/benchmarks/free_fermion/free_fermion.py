@@ -28,16 +28,18 @@ from .free_fermion_helpers import (
     computes_score_values,
     extract_simulation_results,
 )
-from quark_plugin_quantinuum.interfaces.benchmark_circuits_pytket import (
-    BenchmarkCircuitsPytket,
-)
+from ...interfaces.backend_input_pytket import BackendInputPytket
+from ...interfaces.backend_input_qiskit import BackendInputQiskit
 
 logger = logging.getLogger()
 
 
 @dataclass
 class FreeFermion(Core):
-    """Implements the Free Fermion Simulation Benchmark
+    """Implements a test version of the Free Fermion Simulation Benchmark
+
+    This is only for testing backends. For up-to-date simulation benchmarks from Quantinuum,
+    see the dedicated plugin repository: https://github.com/Quantinuum/QUARK-plugin-hamiltonian-simulation
 
     Attributes:
         lx: Lattice width Lx used for the simulation. Must be a positive even integer.
@@ -45,6 +47,8 @@ class FreeFermion(Core):
         trotter_dt: Time step size
         trotter_n_step: Number of time steps (default: 2*Ly). Provide total number of steps as
                        integer if using custom value.
+        output_circuit_type: Type of output circuit, either pytket or qiskit (default: pytket)
+        n_shots: Number of shots used for all circuits.
         create_plot: Whether to create a plot of the results (default: False)
         is used to show the plot dynamically.
 
@@ -54,6 +58,8 @@ class FreeFermion(Core):
     ly: int = 2
     trotter_dt: float = 0.2
     trotter_n_step: int | None = None
+    output_circuit_type: str = "pytket"
+    n_shots: int = 10
     create_plot: bool = False
     metrics: Dict[str, float | int | str] = field(init=False, default_factory=dict)
 
@@ -92,11 +98,18 @@ class FreeFermion(Core):
         logger.info(
             f"Using a trotter step size of {self.trotter_dt} and up to {self.internal_trotter_n_step} trotter steps"
         )
-        circuits = [
-            qiskit_to_tk(create_circuit(self.lx, self.ly, self.trotter_dt, n))
-            for n in range(self.internal_trotter_n_step)
-        ]
-        return Data(Other(BenchmarkCircuitsPytket(circuits, self.benchmark_tag())))
+        circuits = [create_circuit(self.lx, self.ly, self.trotter_dt, n)
+                for n in range(self.internal_trotter_n_step)]
+        shots_per_circuit = [self.n_shots]* len(circuits)
+        match self.output_circuit_type:
+            case "pytket":
+                circuits_pytket = [qiskit_to_tk(circ) for circ in circuits]
+                return Data(Other(BackendInputPytket(circuits_pytket, shots_per_circuit, self.benchmark_tag())))
+            case "qiskit":
+                return Data(Other(BackendInputQiskit(circuits, shots_per_circuit, self.benchmark_tag())))
+            case _:
+                raise ValueError(f"Invalid output circuit type: {self.output_circuit_type} only qiskit and pytket are supported")
+
 
     @override
     def postprocess(self, input_data: Other[BackendResult]) -> Result:
@@ -109,7 +122,7 @@ class FreeFermion(Core):
 
         backend_result = input_data.data
 
-        counts_per_circuit, n_shots = backend_result.counts, backend_result.n_shots
+        counts_per_circuit, n_shots = backend_result.counts, self.n_shots
 
         simulation_results = np.array(
             extract_simulation_results(

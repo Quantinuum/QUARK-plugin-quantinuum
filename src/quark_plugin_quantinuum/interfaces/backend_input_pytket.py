@@ -16,10 +16,11 @@ from pytket.circuit import Circuit
 
 
 @dataclass
-class BenchmarkCircuitsPytket:
+class BackendInputPytket:
     """
     Input required for simulation benchmarks
     """
 
     circuits: list[Circuit]
+    shots_per_circuit: list[int]
     benchmark_name: str

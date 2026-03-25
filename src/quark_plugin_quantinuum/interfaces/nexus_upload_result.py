@@ -25,5 +25,6 @@ class NexusUploadResult:
 
     circuit_refs: list[CircuitRef]
     circuits: list[Circuit]
+    shots_per_circuit: list[int]
     benchmark_name: str
     nexus_project: str

@@ -21,7 +21,7 @@ import qnexus as qnx
 import datetime
 
 from ..interfaces.backend_result import BackendResult
-from ..interfaces.benchmark_circuits_pytket import BenchmarkCircuitsPytket
+from ..interfaces.backend_input_pytket import BackendInputPytket
 from ..interfaces.nexus_upload_result import NexusUploadResult
 
 logger = logging.getLogger()
@@ -32,7 +32,7 @@ class NexusUpload(Core):
     project_name: str = "Quark Benchmarking"
 
     @override
-    def preprocess(self, input_data: Other[BenchmarkCircuitsPytket]) -> Result:
+    def preprocess(self, input_data: Other[BackendInputPytket]) -> Result:
         project = qnx.projects.get_or_create(name=self.project_name)
         qnx.context.set_active_project(project)
         jobname_suffix = datetime.datetime.now().strftime("%Y_%m_%d-%H-%M-%S")
@@ -54,6 +54,7 @@ class NexusUpload(Core):
                 NexusUploadResult(
                     circuit_refs,
                     circuits,
+                    backend_input.shots_per_circuit,
                     benchmark_name,
                     self.project_name,
                 )

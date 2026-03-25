@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
+from qiskit import QuantumCircuit
 
 
 @dataclass
-class BackendResult:
+class BackendInputQiskit:
     """
-    Result returned from a quantum backend.
+    Input required for a quantum backend.
     """
-
-    counts: list[dict[str, int]]
+    circuits: list[QuantumCircuit]
+    shots_per_circuit: list[int]
+    benchmark_name: str
