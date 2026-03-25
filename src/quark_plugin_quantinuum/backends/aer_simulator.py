@@ -15,43 +15,57 @@ from dataclasses import dataclass, field
 from typing import override
 import logging
 
-from pytket.extensions.qiskit import tk_to_qiskit
 from qiskit_aer import AerSimulator as QiskitAS
 from qiskit import QuantumCircuit
 from quark.core import Core, Data, Result
 from quark.interface_types import Other
 
+from ..interfaces.backend_input_qiskit import BackendInputQiskit
 from ..interfaces.backend_result import BackendResult
-from ..interfaces.benchmark_circuits_pytket import BenchmarkCircuitsPytket
 
 logger = logging.getLogger()
 
 
 @dataclass
 class AerSimulator(Core):
-    n_shots: int = 100
     _results: BackendResult | None = field(init=False, default=None)
 
     @override
-    def preprocess(self, input_data: Other[BenchmarkCircuitsPytket]) -> Result:
-        backend = QiskitAS()
+    def preprocess(self, input_data: Other[BackendInputQiskit]) -> Result:
         backend_input = input_data.data
+        if not isinstance(backend_input, BackendInputQiskit):
+            raise ValueError(
+                f"AerSimulator input error: {BackendInputQiskit.__name__} expected but got {backend_input.__class__.__name__}"
+            )
         circuits = backend_input.circuits
-        qiskit_circuits = [tk_to_qiskit(circ) for circ in circuits]
-        self.warn_on_large_circuits(qiskit_circuits)
+        shots_per_circuit = backend_input.shots_per_circuit
+        self.warn_on_large_circuits(circuits)
 
         counts_per_circuit = []
-        logger.info(
-            f"Running circuits for benchmark {backend_input.benchmark_name} on AerSimulator"
-        )
-        for n, circuit in enumerate(qiskit_circuits):
+        backend = QiskitAS()
+        logger.info("Running circuits on AerSimulator")
+        for n, circuit in enumerate(circuits):
             logger.info(f"Running circuit for {n} Trotter steps")
-            counts = (
-                backend.run(circuit, shots=self.n_shots).result().get_counts(circuit)
+            from qiskit_aer.noise import NoiseModel, depolarizing_error
+
+            noise_model = NoiseModel()
+            error = depolarizing_error(0.001, 2)
+            noise_model.add_all_qubit_quantum_error(
+                error, ["cx", "cy", "cz", "rzz", "rxx", "ryy"]
             )
+            counts = (
+                backend.run(
+                    circuit, noise_model=noise_model, shots=shots_per_circuit[n]
+                )
+                .result()
+                .get_counts(circuit)
+            )
+
             counts_per_circuit.append(counts)
 
-        self._results = BackendResult(counts=counts_per_circuit, n_shots=self.n_shots)
+        self._results = BackendResult(
+            counts=counts_per_circuit,
+        )
         return Data(None)
 
     @override

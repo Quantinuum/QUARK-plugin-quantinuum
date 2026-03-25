@@ -52,19 +52,22 @@ class QuantinuumNexus(Core):
 
     @override
     def preprocess(self, input_data: Other[NexusUploadResult]) -> Result:
-        nexus_circuit_refs = input_data.data
+        nexus_upload_result = input_data.data
         nexus_project_name = (
-            nexus_circuit_refs.nexus_project
+            nexus_upload_result.nexus_project
             if self.project_name_override is None
             else self.project_name_override
         )
         project = qnx.projects.get_or_create(name=nexus_project_name)
         jobname_suffix = datetime.datetime.now().strftime("%Y_%m_%d-%H-%M-%S")
-        compilation_result = self.compile(nexus_circuit_refs, project, jobname_suffix)
+        compilation_result = self.compile(nexus_upload_result, project, jobname_suffix)
         counts_per_circuit = self.run_compiled_circuits(
-            compilation_result, project, jobname_suffix
+            compilation_result,
+            nexus_upload_result.shots_per_circuit,
+            project,
+            jobname_suffix,
         )
-        self._results = BackendResult(counts=counts_per_circuit, n_shots=self.n_shots)
+        self._results = BackendResult(counts=counts_per_circuit)
         return Data(None)
 
     @override
@@ -114,6 +117,7 @@ class QuantinuumNexus(Core):
     def run_compiled_circuits(
         self,
         compilation_result: NexusCompilationResult,
+        shots_per_circuit: list[int],
         project: ProjectRef,
         jobname_suffix: str,
     ) -> list[dict[str, int]]:
@@ -125,7 +129,7 @@ class QuantinuumNexus(Core):
         execute_job_ref = qnx.start_execute_job(
             programs=compiled_circuit_refs,
             name=f"{compilation_result.benchmark_name}_execute_async-{jobname_suffix}",
-            n_shots=[self.n_shots] * len(compiled_circuit_refs),
+            n_shots=shots_per_circuit,
             backend_config=self._nexus_device_config,
             project=project,
         )

@@ -2,12 +2,9 @@ plugins: ["quark_plugin_quantinuum"]
 
 pipeline:
   - [
-    "free_fermion",
-    "free_fermion" : {lx: 2, ly: 2, trotter_dt: 0.1, trotter_n_step: 5},
-    "free_fermion" : {lx: 2, ly: 4, trotter_dt: 0.3, trotter_n_step: 8},
-    "free_fermion" : {lx: 4, ly: 2, trotter_dt: 0.5, trotter_n_step: 8},
+    "free_fermion" : {output_circuit_type: "qiskit"},
+    "free_fermion" : {lx: 2, ly: 2, trotter_dt: 0.1, trotter_n_step: 5, output_circuit_type: "qiskit"},
+    "free_fermion" : {lx: 2, ly: 4, trotter_dt: 0.3, trotter_n_step: 8, output_circuit_type: "qiskit"},
+    "free_fermion" : {lx: 4, ly: 2, trotter_dt: 0.5, trotter_n_step: 8, output_circuit_type: "qiskit"},
   ]
-  - [
-      "aer_simulator",
-      "aer_simulator": {n_shots: 1000},
-  ]
+  - "aer_simulator"
