@@ -1,0 +1,133 @@
+name: Release
+
+on:
+  pull_request:
+    branches:
+      - "*"
+  push:
+    branches:
+      - main
+  release:
+    types:
+      - published
+
+env:
+  UV_VERSION: "0.6.11"
+
+jobs:
+  build:
+    name: Build distribution
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+
+      - name: Build distributions
+        run: uv build
+
+      - name: Upload distributions artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package-distributions-ci
+          path: dist/
+          if-no-files-found: error
+
+  release-build:
+    name: Build release distribution
+    if: ${{ github.event_name == 'release' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      package-version: ${{ steps.package-version.outputs.version }}
+    steps:
+      - name: Check out release tag
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: refs/tags/${{ github.event.release.tag_name }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+
+      - name: Build distributions
+        run: uv build
+
+      - name: Read built version
+        id: package-version
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          wheel = next(Path("dist").glob("*.whl"))
+          version = wheel.name.split("-")[1]
+          github_output = Path(os.environ["GITHUB_OUTPUT"])
+          with github_output.open("a", encoding="utf-8") as fh:
+              fh.write(f"version={version}\n")
+          PY
+
+      - name: Upload distributions artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package-distributions-release
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    name: Publish to PyPI
+    if: ${{ github.event_name == 'release' }}
+    needs: release-build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/QUARK-plugin-quantinuum
+    permissions:
+      id-token: write
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions-release
+          path: dist/
+
+      - name: Publish distributions
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+  release-summary:
+    name: Release summary
+    if: ${{ github.event_name == 'release' && success() }}
+    needs: [release-build, publish]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Summarize release
+        run: |
+          {
+            echo "Published version \`${{ needs.release-build.outputs.package-version }}\` to PyPI."
+            echo
+            echo "Package page: https://pypi.org/project/QUARK-plugin-quantinuum/${{ needs.release-build.outputs.package-version }}/"
+          } >> "${GITHUB_STEP_SUMMARY}"
